@@ -22,6 +22,12 @@ dependencies {
 	// TODO should be replaced with implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
 	implementation group: 'org.springframework.security.oauth', name: 'spring-security-oauth2', version: '2.5.2.RELEASE'
 
+	// https://mvnrepository.com/artifact/com.github.scribejava/scribejava
+	implementation group: 'com.github.scribejava', name: 'scribejava', version: '8.3.3'
+	implementation group: 'com.github.scribejava', name: 'scribejava-core', version: '8.3.3'
+	implementation group: 'com.github.scribejava', name: 'scribejava-apis', version: '8.3.3'
+
+
 	implementation 'com.fasterxml.jackson.core:jackson-databind:2.17.1'
 
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
