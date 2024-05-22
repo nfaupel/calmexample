@@ -20,6 +20,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
 public class CalmExampleApplication {
@@ -32,6 +33,22 @@ public class CalmExampleApplication {
 		
 		RestTemplate restTemplate = restTemplate(accessToken);
 		
+		ResponseEntity<Map> mapResponseEntity = createBusinessProcess(restTemplate, tenantBaseUrl);
+		
+		
+		ResponseEntity<CreateSolutionProcessResponse> solutionProcessResponseEntity =
+				createSolutionProcess(mapResponseEntity, restTemplate, tenantBaseUrl);
+		
+		
+		ResponseEntity<GetSolutionProcessFlowResponse> solutionProcessFlows =
+				getGetSolutionProcessFlows(restTemplate, tenantBaseUrl, solutionProcessResponseEntity);
+		
+		postBpmnDiagram(solutionProcessFlows, restTemplate, tenantBaseUrl);
+		
+	}
+	
+	
+	private static ResponseEntity<Map> createBusinessProcess(RestTemplate restTemplate, String tenantBaseUrl) {
 		Map<String, String> businessProcessReq = new HashMap<>();
 		businessProcessReq.put("name", "MY API Business Process" + System.currentTimeMillis());
 		businessProcessReq.put("description", "MY Business Process Created via API");
@@ -42,9 +59,12 @@ public class CalmExampleApplication {
 				Map.class
 		);
 		System.out.println("Business Process created: " + mapResponseEntity.getStatusCode() + " " + mapResponseEntity.getBody());
-		
-		
-		
+		return mapResponseEntity;
+	}
+	
+	
+	private static ResponseEntity<CreateSolutionProcessResponse> createSolutionProcess(
+			ResponseEntity<Map> mapResponseEntity, RestTemplate restTemplate, String tenantBaseUrl) {
 		Map<String, Object> solutionProcessReq = new HashMap<>();
 		solutionProcessReq.put("name", "MY API Custom Solution Process");
 		solutionProcessReq.put("description", "MY Solution Process Created via API");
@@ -58,29 +78,28 @@ public class CalmExampleApplication {
 				CreateSolutionProcessResponse.class
 		);
 		System.out.println("Solution Process created " + solutionProcessResponseEntity.getStatusCode());
-
-		
-		
+		return solutionProcessResponseEntity;
+	}
+	
+	
+	private static ResponseEntity<GetSolutionProcessFlowResponse> getGetSolutionProcessFlows(
+			RestTemplate restTemplate, String tenantBaseUrl,
+			ResponseEntity<CreateSolutionProcessResponse> solutionProcessResponseEntity) {
 		ResponseEntity<GetSolutionProcessFlowResponse> solutionProcessFlows = restTemplate.getForEntity(
 				tenantBaseUrl + "/api/calm-processauthoring/v1/solutionProcesses/" + solutionProcessResponseEntity.getBody().getId() + "/solutionProcessFlows",
 				GetSolutionProcessFlowResponse.class
 		);
 		
 		System.out.println("solutionProcessFlows: " + solutionProcessFlows.getStatusCode() + "\n" + solutionProcessFlows.getBody());
-		
-		
-//		ResponseEntity<String> responseEntity = restTemplate.exchange(
-//				tenantBaseUrl + "/solutionProcessFlows/" + solutionProcessFlows.getBody().getValue().get(0).getId() + "/solutionProcessFlowDiagrams/bpmn",
-//				HttpMethod.HEAD,
-//				new HttpEntity<>("null"),
-//				String.class
-//		);
-		
-//		System.out.println("HEAD: " + responseEntity.getStatusCode() + " " + responseEntity.getBody());
-		
+		return solutionProcessFlows;
+	}
+	
+	
+	private static void postBpmnDiagram(ResponseEntity<GetSolutionProcessFlowResponse> solutionProcessFlows,
+			RestTemplate restTemplate, String tenantBaseUrl) throws IOException {
 		Resource resource = new ClassPathResource("procure_parts.bpmn");
 		byte[] bytes = Files.readAllBytes(Paths.get(resource.getURI()));
-
+		
 		String bpmnString = new String(bytes);
 		Map<String, Object> bpmnMap = new HashMap<>();
 		bpmnMap.put("bpmn", bpmnString);
@@ -88,14 +107,19 @@ public class CalmExampleApplication {
 		
 		HttpEntity<Map<String, Object>> entity = new HttpEntity<>(bpmnMap);
 		
-		ResponseEntity<String> bpmnDiagramResponse = restTemplate.postForEntity(
-				tenantBaseUrl + "/solutionProcessFlows/" + solutionProcessFlows.getBody().getValue().get(0).getId() + "/solutionProcessFlowDiagrams/bpmn",
-				entity,
-				String.class
-		);
-		System.out.println("BPMN Diagram created: " + bpmnDiagramResponse.getStatusCode() + " " + bpmnDiagramResponse.getBody());
-		
-		
+		String id = solutionProcessFlows.getBody().getValue().get(0).getId();
+		try {
+			ResponseEntity<String> bpmnDiagramResponse = restTemplate.postForEntity(
+					tenantBaseUrl + "/api/calm-processauthoring/v1/solutionProcessFlows/" + id + "/solutionProcessFlowDiagrams/bpmn",
+					entity,
+					String.class
+			);
+			System.out.println(
+					"BPMN Diagram created: " + bpmnDiagramResponse.getStatusCode() + " " + bpmnDiagramResponse.getBody()
+							+ " headers: " + bpmnDiagramResponse.getHeaders());
+		} catch (HttpClientErrorException e) {
+			System.out.println("Error: " + e.getStatusCode() + " " + e.getResponseBodyAsString() + "\nheaders: " + e.getResponseHeaders());
+		}
 	}
 	
 	
