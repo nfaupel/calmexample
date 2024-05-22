@@ -1,1 +1,1 @@
-Woring Java based example code how to connect to CALM to upload BPMN diagrams.
+Working Java based example code how to connect to CALM to upload BPMN diagrams.
