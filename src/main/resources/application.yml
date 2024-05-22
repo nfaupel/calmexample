@@ -1,0 +1,6 @@
+spring.application.name : calmexample
+
+calmexample.uaa.clientid : "sb-CALMAPI!b484816|sapcloudalm!b162106"
+calmexample.uaa.clientsecret : "958e6258-23a2-4969-97b3-25acdb19977b$ny8CLia3Jo4qkB2NxxU8fl6WCGIKJvSOw5L44vaDfao="
+calmexample.uaa.url : "https://calm-dev-eu10-004-relcallstablefeatures-team-signavio.authentication.eu10.hana.ondemand.com"
+calmexample.uaa.tenantid : "0391180a-7352-4c9e-ba94-e00cba807d2b"
